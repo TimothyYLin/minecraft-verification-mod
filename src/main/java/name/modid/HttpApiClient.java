@@ -1,5 +1,6 @@
 package name.modid;
 
+import name.modid.api.McVerifyResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -53,13 +54,54 @@ public class HttpApiClient {
                                     "Body: {}", statusCode, response.body());
                         }
                         return false;
-            }).exceptionally(error -> {
-                LOGGER.error("API call to is-verified failed:", error);
-                return false;
-            });
+                    }).exceptionally(error -> {
+                        LOGGER.error("API call to is-verified failed:", error);
+                        return false;
+                    });
         } catch (URISyntaxException e) {
             LOGGER.error("Malformed URI for is-verified check:", e);
             return CompletableFuture.completedFuture(false);
+        }
+    }
+
+    public static CompletableFuture<McVerifyResult> verifyAsync(int code, String playerUuid){
+        try{
+            Gson gson = new Gson();
+            Map<String, Object> requestData = Map.of("code", code, "mc_uuid", playerUuid);
+            String requestBody = gson.toJson(requestData);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(AppConfig.getPortalApiUrl() + "/mc-verify"))
+                    .header("Content-Type", "application/json")
+                    .header("X-Internal-API-Key", AppConfig.getApiKey())
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+            return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenApply(response -> {
+                        return switch(response.statusCode()){
+                            case 200 ->
+                                    new McVerifyResult(McVerifyResult.Status.SUCCESS, response.body());
+                            case 400 ->
+                                    new McVerifyResult(McVerifyResult.Status.BAD_REQUEST, response.body());
+                            case 404 ->
+                                    new McVerifyResult(McVerifyResult.Status.INVALID_CODE, response.body());
+                            case 409 ->
+                                    new McVerifyResult(McVerifyResult.Status.CONFLICT, response.body());
+                            case 410 ->
+                                    new McVerifyResult(McVerifyResult.Status.EXPIRED_CODE, response.body());
+                            default ->
+                                    new McVerifyResult(McVerifyResult.Status.INTERNAL_SERVER_ERROR, response.body());
+                        };
+                    }).exceptionally(error -> {
+                        LOGGER.error("API call to mc-verify failed with an exception", error);
+                        return new McVerifyResult(McVerifyResult.Status.API_ERROR, null);
+                    });
+
+        }catch(URISyntaxException e) {
+            LOGGER.error("Malformed URI for verify API call:", e);
+            McVerifyResult errorResult = new McVerifyResult(McVerifyResult.Status.API_ERROR, null);
+            return CompletableFuture.completedFuture(errorResult);
         }
     }
 }
