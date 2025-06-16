@@ -20,5 +20,6 @@ public class VerificationMod implements ModInitializer {
 		// Proceed with mild caution.
 
 		LOGGER.info("VerificationMod has initialized");
+		ModEvents.register();
 	}
 }
