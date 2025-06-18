@@ -1,6 +1,7 @@
 package name.modid;
 
 import name.modid.util.PlayerStateManager;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -13,7 +14,7 @@ public class ModEvents {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModEvents.class);
 
     public static void register(){
-        ServerPlayConnectionEvents.JOIN.register(((handler, sender, server) -> {
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 
             ServerPlayerEntity player = handler.player;
             LOGGER.info("Register called for player {}, UUID {}:", player.getName().getString(), player.getUuidAsString());
@@ -34,6 +35,8 @@ public class ModEvents {
 
                     server.execute(() -> PlayerStateManager.syncFrozenState(player, isFrozen));
                 });
-        }));
+        });
+
+        ServerTickEvents.END_SERVER_TICK.register(PlayerStateManager::onServerTick);
     }
 }
