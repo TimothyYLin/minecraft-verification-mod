@@ -26,7 +26,7 @@ public class FrozenOverlayRenderer {
                     Text.literal("Please use ").append(
                             Text.literal("/verify <code>").formatted(Formatting.YELLOW)
                     ),
-                    Text.literal("If you believe this is an error, relog or use ").append(
+                    Text.literal("If you believe this is an error, re-login or use ").append(
                             Text.literal("/verify recheck").formatted(Formatting.YELLOW)
                     )
             );
