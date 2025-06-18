@@ -22,8 +22,10 @@ public class HttpApiClient {
 
     public static CompletableFuture<Boolean> isVerifiedAsync(String playerUuid){
         try {
+            String playerUuidWithoutDashes = playerUuid.replace("-", "");
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(AppConfig.getPortalApiUrl() + "/is-verified?uuid=" + playerUuid))
+                    .uri(new URI(AppConfig.getPortalApiUrl() + AppConfig.IS_VERIFIED_ENDPOINT +
+                            "?mc_uuid=" + playerUuidWithoutDashes))
                     .build();
 
             return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
@@ -43,7 +45,7 @@ public class HttpApiClient {
                             return false;
                         }else if (statusCode == 404) {
                             LOGGER.info("Player with UUID {} is not yet linked in the database " +
-                                    "(API returned 404 Not Found).", playerUuid);
+                                    "(API returned 404 Not Found).", playerUuidWithoutDashes);
                         }
                         else if (statusCode == 400) {
                             LOGGER.warn("The server reported a Bad Request (400). This may indicate a bug " +
@@ -66,12 +68,13 @@ public class HttpApiClient {
 
     public static CompletableFuture<McVerifyResult> verifyAsync(int code, String playerUuid){
         try{
+            String playerUuidWithoutDashes = playerUuid.replace("-", "");
             Gson gson = new Gson();
-            Map<String, Object> requestData = Map.of("code", code, "mc_uuid", playerUuid);
+            Map<String, Object> requestData = Map.of("code", String.valueOf(code), "mc_uuid", playerUuidWithoutDashes);
             String requestBody = gson.toJson(requestData);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(AppConfig.getPortalApiUrl() + "/mc-verify"))
+                    .uri(new URI(AppConfig.getPortalApiUrl() + AppConfig.MC_VERIFY_ENDPOINT))
                     .header("Content-Type", "application/json")
                     .header("X-Internal-API-Key", AppConfig.getApiKey())
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))

@@ -1,9 +1,10 @@
 package name.modid;
 
+import name.modid.util.PlayerStateManager;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,18 +20,19 @@ public class ModEvents {
 
             HttpApiClient.isVerifiedAsync(player.getUuidAsString())
                 .thenAccept(isVerified -> {
-                    if(!isVerified){
+                    boolean isFrozen = !isVerified;
+
+                    if(!isVerified) {
                         LOGGER.info("Player {} is not verified. Applying freeze effect.", player.getName().getString());
-                        server.execute(() -> {
-                            player.addStatusEffect(
-                                    new StatusEffectInstance(StatusEffects.SLOWNESS,
-                                            StatusEffectInstance.INFINITE,
-                                            255,
-                                            false,
-                                            false,
-                                            false));
-                        });
+                        player.sendMessage(Text.literal("Welcome! Please follow the on-screen instructions " +
+                                        "to get yourself verified and start playing.").formatted(Formatting.GRAY));
+                    }else{
+                        LOGGER.info("Player {} is verified.", player.getName().getString());
+                        player.sendMessage(Text.literal("Welcome back! You have already been verified!")
+                                .formatted(Formatting.GREEN));
                     }
+
+                    server.execute(() -> PlayerStateManager.syncFrozenState(player, isFrozen));
                 });
         }));
     }

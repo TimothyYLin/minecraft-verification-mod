@@ -19,7 +19,7 @@ public class VerificationMod implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		LOGGER.info("VerificationMod has initialized");
+		LOGGER.info("VerificationMod (Server) has initialized");
 		ModEvents.register();
 		ModCommands.register();
 	}
