@@ -19,7 +19,7 @@
 			"name.modid.VerificationMod"
 		],
 		"client": [
-			"name.modid.VerificationmodClient"
+			"name.modid.VerificationModClient"
 		]
 	},
 	"mixins": [
